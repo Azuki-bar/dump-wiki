@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model active_storage_attachments {
+  id                   BigInt               @id @default(autoincrement())
+  name                 String               @db.VarChar(255)
+  record_type          String               @db.VarChar(255)
+  record_id            BigInt
+  blob_id              BigInt
+  created_at           DateTime             @db.DateTime(0)
+  active_storage_blobs active_storage_blobs @relation(fields: [blob_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_c3b3935057")
+
+  @@unique([record_type, record_id, name, blob_id], map: "index_active_storage_attachments_uniqueness")
+  @@index([blob_id], map: "index_active_storage_attachments_on_blob_id")
+}
+
+model active_storage_blobs {
+  id                             BigInt                           @id @default(autoincrement())
+  key                            String                           @unique(map: "index_active_storage_blobs_on_key") @db.VarChar(255)
+  filename                       String                           @db.VarChar(255)
+  content_type                   String?                          @db.VarChar(255)
+  metadata                       String?                          @db.Text
+  byte_size                      BigInt
+  checksum                       String                           @db.VarChar(255)
+  created_at                     DateTime                         @db.DateTime(0)
+  service_name                   String                           @db.VarChar(255)
+  active_storage_attachments     active_storage_attachments[]
+  active_storage_variant_records active_storage_variant_records[]
+}
+
+model active_storage_variant_records {
+  id                   BigInt               @id @default(autoincrement())
+  blob_id              BigInt
+  variation_digest     String               @db.VarChar(255)
+  active_storage_blobs active_storage_blobs @relation(fields: [blob_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_993965df05")
+
+  @@unique([blob_id, variation_digest], map: "index_active_storage_variant_records_uniqueness")
+}
+
+model ar_internal_metadata {
+  key        String   @id @db.VarChar(255)
+  value      String?  @db.VarChar(255)
+  created_at DateTime @db.DateTime(6)
+  updated_at DateTime @db.DateTime(6)
+}
+
+model comments {
+  id         BigInt   @id @default(autoincrement())
+  user_id    BigInt?
+  page_id    BigInt?
+  comment    String?  @db.Text
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+
+  @@index([page_id], map: "index_comments_on_page_id")
+  @@index([user_id], map: "index_comments_on_user_id")
+}
+
+model invitation_tokens {
+  id            BigInt    @id @default(autoincrement())
+  token         String    @db.VarChar(255)
+  expired_at    DateTime? @db.DateTime(0)
+  created_by_id BigInt
+  created_at    DateTime  @db.DateTime(6)
+  updated_at    DateTime  @db.DateTime(6)
+  users         users     @relation(fields: [created_by_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_rails_3465ca1605")
+
+  @@index([created_by_id], map: "index_invitation_tokens_on_created_by_id")
+}
+
+model pages {
+  id                BigInt   @id @default(autoincrement())
+  readable_group_id BigInt?
+  editable_group_id BigInt?
+  parent_id         BigInt?
+  user_id           BigInt?
+  title             String   @db.VarChar(255)
+  content           String   @db.LongText
+  created_at        DateTime @db.DateTime(0)
+  updated_at        DateTime @db.DateTime(0)
+
+  @@index([title], map: "fulltext_index_pages_on_title")
+  // @@index([content], map: "index_pages_on_content")
+  @@index([editable_group_id], map: "index_pages_on_editable_group_id")
+  @@index([parent_id], map: "index_pages_on_parent_id")
+  @@index([readable_group_id], map: "index_pages_on_readable_group_id")
+  @@index([title], map: "index_pages_on_title")
+  @@index([updated_at], map: "index_pages_on_updated_at_and_path")
+  @@index([user_id], map: "index_pages_on_user_id")
+}
+
+model schema_migrations {
+  version String @id @db.VarChar(255)
+}
+
+model update_histories {
+  id         BigInt   @id @default(autoincrement())
+  page_id    BigInt?
+  user_id    BigInt?
+  content    String   @db.LongText
+  created_at DateTime @db.DateTime(0)
+  updated_at DateTime @db.DateTime(0)
+
+  @@index([created_at], map: "index_update_histories_on_created_at")
+  @@index([page_id], map: "index_update_histories_on_page_id")
+  @@index([user_id], map: "index_update_histories_on_user_id")
+}
+
+model usergroups {
+  id             BigInt   @id @default(autoincrement())
+  create_user_id BigInt?
+  name           String?  @db.VarChar(255)
+  created_at     DateTime @db.DateTime(0)
+  updated_at     DateTime @db.DateTime(0)
+
+  @@index([create_user_id], map: "index_usergroups_on_create_user_id")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by the Prisma Client.
+model usergroups_users {
+  user_id      BigInt?
+  usergroup_id BigInt?
+
+  @@index([user_id], map: "index_usergroups_users_on_user_id")
+  @@index([usergroup_id], map: "index_usergroups_users_on_usergroup_id")
+  @@ignore
+}
+
+model users {
+  id                     BigInt              @id @default(autoincrement())
+  email                  String              @unique(map: "index_users_on_email") @default("") @db.VarChar(255)
+  encrypted_password     String              @default("") @db.VarChar(255)
+  reset_password_token   String?             @unique(map: "index_users_on_reset_password_token") @db.VarChar(255)
+  reset_password_sent_at DateTime?           @db.DateTime(0)
+  remember_created_at    DateTime?           @db.DateTime(0)
+  sign_in_count          Int                 @default(0)
+  current_sign_in_at     DateTime?           @db.DateTime(0)
+  last_sign_in_at        DateTime?           @db.DateTime(0)
+  current_sign_in_ip     String?             @db.VarChar(255)
+  last_sign_in_ip        String?             @db.VarChar(255)
+  confirmation_token     String?             @unique(map: "index_users_on_confirmation_token") @db.VarChar(255)
+  confirmed_at           DateTime?           @db.DateTime(0)
+  confirmation_sent_at   DateTime?           @db.DateTime(0)
+  unconfirmed_email      String?             @db.VarChar(255)
+  failed_attempts        Int                 @default(0)
+  unlock_token           String?             @unique(map: "index_users_on_unlock_token") @db.VarChar(255)
+  locked_at              DateTime?           @db.DateTime(0)
+  user_id                String              @db.VarChar(255)
+  name                   String?             @db.VarChar(255)
+  description            String?             @db.VarChar(255)
+  is_admin               Boolean             @default(false)
+  created_at             DateTime            @db.DateTime(0)
+  updated_at             DateTime            @db.DateTime(0)
+  invitation_tokens      invitation_tokens[]
+
+  @@index([user_id], map: "index_users_on_user_id")
+}

@@ -1,0 +1,13 @@
+services:
+  db:
+    image: mysql:8.0.32
+    environment:
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+      MYSQL_DATABASE: wiki
+    ports:
+      - 3306:3306
+    volumes:
+      - db:/var/lib/mysql
+      - ./dbentrypoint:/docker-entrypoint-initdb.d/:ro
+volumes:
+  db:
